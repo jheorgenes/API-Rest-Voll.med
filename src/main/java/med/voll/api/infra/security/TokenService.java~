@@ -14,9 +14,11 @@ import java.util.Date;
 @Service //Pro spring carregar essa classe
 public class TokenService {
 
+    private String secret;
+
     public String gerarToken(Usuario usuario) {
         try {
-            Algorithm algorithm = Algorithm.HMAC256("12345678"); //Chave de segurança
+            Algorithm algorithm = Algorithm.HMAC256(secret); //Chave de segurança
             return JWT.create()
                     .withIssuer("API Voll.med") //Pra identificar o emissor do token (no caso nossa própria API)
                     .withSubject(usuario.getLogin()) //Pra identificar o subject (no caso o login do usuário)
@@ -28,6 +30,9 @@ public class TokenService {
         }
     }
 
+    /**
+     * Convertendo uma data de expiração para o tipo Instant para ser usada como data de expiração do token
+     */
     private Instant dataExpiracao() {
         return LocalDateTime.now().plusHours(2).toInstant(ZoneOffset.of("-03:00"));
     }
