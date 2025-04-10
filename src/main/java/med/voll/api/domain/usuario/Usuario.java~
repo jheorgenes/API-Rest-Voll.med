@@ -31,7 +31,6 @@ public class Usuario implements UserDetails { //Implementação necessária para
      * Metodo da interface UserDetails
      * Retorna a a lista de permissões simplificadas do usuário
      * Esse SimpleGrantedAuthority é uma implementação de GrantedAuthority que representa uma permissão simples.
-     * "ROLE_USER" é um perfil fixo que indica que o usuário tem permissão de acesso ao recurso
      */
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
