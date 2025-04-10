@@ -27,14 +27,19 @@ public class AutenticacaoController {
 
     @PostMapping
     public ResponseEntity efetuarLogin(@RequestBody @Valid DadosAutenticacao dados) {
-        // Pra obter o authenticationToken, necessita dessa classe UsernamePasswordAuthenticationToken
-        var authenticationToken = new UsernamePasswordAuthenticationToken(dados.login(), dados.senha());
-        var authentication = manager.authenticate(authenticationToken);
+        try {
+            // Pra obter o authenticationToken, necessita dessa classe UsernamePasswordAuthenticationToken
+            var authenticationToken = new UsernamePasswordAuthenticationToken(dados.login(), dados.senha());
+            var authentication = manager.authenticate(authenticationToken);
 
-        // Devolvendo um token gerado utilizando o tokenService
-        // Em authentication o método getPrincipal() retorna o Object<Usuario>
-        // Basta fazer o cash para a classe Usuario
-        var tokenJWT = tokenService.gerarToken((Usuario) authentication.getPrincipal());
-        return ResponseEntity.ok(new DadosTokenJWT(tokenJWT));
+            // Devolvendo um token gerado utilizando o tokenService
+            // Em authentication o método getPrincipal() retorna o Object<Usuario>
+            // Basta fazer o cash para a classe Usuario
+            var tokenJWT = tokenService.gerarToken((Usuario) authentication.getPrincipal());
+            return ResponseEntity.ok(new DadosTokenJWT(tokenJWT));
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
     }
 }
