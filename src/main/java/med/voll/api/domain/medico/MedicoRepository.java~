@@ -13,7 +13,6 @@ public interface MedicoRepository extends JpaRepository<Medico, Long> {
 
     Page<Medico> findAllByAtivoTrue(Pageable paginacao);
 
-    // JPQL não identifica Booleanos com Integer, então lembre-se sempre de trocar 0 e 1 por false e true
     @Query("""
             SELECT m FROM Medico m
                 WHERE m.ativo = true
