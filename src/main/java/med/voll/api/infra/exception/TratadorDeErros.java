@@ -1,6 +1,8 @@
 package med.voll.api.infra.exception;
 
 import jakarta.persistence.EntityNotFoundException;
+import med.voll.api.domain.ValidacaoException;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
@@ -11,6 +13,8 @@ import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+
+import java.util.Map;
 
 /**
  *  @RestControllerAdvice: define um controller gerenciado pelo próprio spring
@@ -68,6 +72,26 @@ public class TratadorDeErros {
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Erro: " +ex.getLocalizedMessage());
     }
 
+    @ExceptionHandler(ValidacaoException.class)
+    public ResponseEntity tratarErroRegraDeNegocio(ValidacaoException ex) {
+        return ResponseEntity.badRequest().body(ex.getMessage());
+    }
+
+    /**
+     * Tratador de erro que o CHATGPT gerou
+     */
+    @ExceptionHandler(DataIntegrityViolationException.class)
+    public ResponseEntity<?> tratarErroViolacaoDeIntegridade(DataIntegrityViolationException ex) {
+        String mensagem = "Dados inválidos: " + extrairMensagemConstraint(ex);
+
+        return ResponseEntity
+                .badRequest()
+                .body(Map.of(
+                        "erro", "Violação de integridade",
+                        "mensagem", mensagem
+                ));
+    }
+
     /**
      * Record gerado para formatar os dados de FieldError enxugando apenas os dados necessários
      * @return {campo, mensagem}
@@ -78,5 +102,10 @@ public class TratadorDeErros {
         public DadosErroValidacao(FieldError erro) {
             this(erro.getField(), erro.getDefaultMessage()); //Recuperando apenas o campo Field e o campo DefaultMessage
         }
+    }
+
+    private String extrairMensagemConstraint(DataIntegrityViolationException ex) {
+        Throwable causa = ex.getMostSpecificCause();
+        return causa != null ? causa.getMessage() : "Violação de restrição de dados";
     }
 }
