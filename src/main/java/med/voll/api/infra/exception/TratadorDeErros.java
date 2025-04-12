@@ -47,10 +47,10 @@ public class TratadorDeErros {
                     .toList());
     }
 
-    @ExceptionHandler(HttpMessageNotReadableException.class)
-    public ResponseEntity tratarErro400(HttpMessageNotReadableException ex) {
-        return ResponseEntity.badRequest().body(ex.getMessage());
-    }
+//    @ExceptionHandler(HttpMessageNotReadableException.class)
+//    public ResponseEntity tratarErro400(HttpMessageNotReadableException ex) {
+//        return ResponseEntity.badRequest().body(ex.getMessage());
+//    }
 
     @ExceptionHandler(BadCredentialsException.class)
     public ResponseEntity tratarErroBadCredentials() {
@@ -90,6 +90,17 @@ public class TratadorDeErros {
                         "erro", "Violação de integridade",
                         "mensagem", mensagem
                 ));
+    }
+
+    /**
+     * Tratador de erro que o CHATGPT gerou para capturar erros de validação de enums
+     */
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    public ResponseEntity tratarErro400(HttpMessageNotReadableException ex) {
+        var mensagem = ex.getMostSpecificCause().getMessage(); // ou ex.getCause().getMessage()
+        return ResponseEntity
+                .badRequest()
+                .body(Map.of("erro", mensagem));
     }
 
     /**
