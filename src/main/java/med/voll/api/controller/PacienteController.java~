@@ -14,7 +14,7 @@ import org.springframework.web.util.UriComponentsBuilder;
 
 @RestController
 @RequestMapping("/pacientes")
-@SecurityRequirement(name = "bearer-key") //Adicionando bearer-key na documentação (pode ser anotado tanto na classe quanto nos métodos)
+@SecurityRequirement(name = "bearer-key")
 public class PacienteController {
 
     @Autowired
