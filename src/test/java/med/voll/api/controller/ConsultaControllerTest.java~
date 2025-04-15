@@ -1,0 +1,96 @@
+package med.voll.api.controller;
+
+import med.voll.api.domain.consulta.AgendaDeConsultas;
+import med.voll.api.domain.consulta.DadosAgendamentoConsulta;
+import med.voll.api.domain.consulta.DadosDetalhamentoConsulta;
+import med.voll.api.domain.medico.Especialidade;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.json.AutoConfigureJsonTesters;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.json.JacksonTester;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import org.springframework.test.web.servlet.MockMvc;
+
+import java.time.LocalDateTime;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+
+@SpringBootTest //Sobe o contexto completo da aplicação para rodar o teste (Serve para testes de integração)
+@AutoConfigureMockMvc //Inicializa o MockMvc, que permite simular requisições HTTP sem subir o servidor de verdade
+@AutoConfigureJsonTesters //Ativa o suporte ao JacksonTester — que converte objetos Java em JSON (e vice-versa), ideal para testar APIs REST
+class ConsultaControllerTest {
+
+    @Autowired
+    private MockMvc mvc; //Pra simular requisições HTTP
+
+    @Autowired
+    private JacksonTester<DadosAgendamentoConsulta> dadosAgendamentoConsultaJson; //Serializa objetos para JSON e compara respostas esperadas
+
+    @Autowired
+    private JacksonTester<DadosDetalhamentoConsulta> dadosDetalhamentoConsultaJson; //Também evita escrever JSON manualmente
+
+    @MockitoBean
+    private AgendaDeConsultas agendaDeConsultas; //Esse é o mock do service que o controller chama internamente (Evitando acessar o banco)
+
+    /**
+     * Cenario 1
+     * Uma requisição POST /consultas sem corpo JSON.
+     * O Controller recebe um @RequestBody, então isso resulta em erro 400 automático.
+     * O teste garante que o validador tá funcionando (rejeitando dados inválidos).
+     */
+    @Test
+    @DisplayName("Deveria devolver código 400 quando informações estão inválidas")
+    @WithMockUser //Simula um usuário autenticado para passar pela segurança
+    void agendar_cenario1() throws Exception {
+        // post() simula uma requisição HTTP POST, mas não foi passado nada no corpo da requisição
+        var response = mvc.perform(post("/consultas"))
+                .andReturn().getResponse();
+
+        assertThat(response.getStatus()).isEqualTo(HttpStatus.BAD_REQUEST.value());
+    }
+
+    /**
+     * Cenario 2
+     *
+     */
+    @Test
+    @DisplayName("Deveria devolver código 200 quando informações estão válidas")
+    @WithMockUser
+    void agendar_cenario2() throws Exception {
+
+        var data = LocalDateTime.now().plusHours(1);
+        var especialidade = Especialidade.CARDIOLOGIA;
+        var dadosDetalhamento = new DadosDetalhamentoConsulta(null, 2l, 5l, data);
+
+        // Quando for chamado o metodo agendar do service (Não importa o que ele recebe como parametro [any()]), finja que ele retorna dadosDetalhamento
+        when(agendaDeConsultas.agendar(any())).thenReturn(dadosDetalhamento); //Esse mock intercepta a chamada ao serviço real
+
+        // Enviando a Requisição Simulada
+        var response = mvc
+                .perform(
+                    post("/consultas")
+                        .contentType(MediaType.APPLICATION_JSON) //Indicando que o corpo da requisição será JSON
+                        .content(dadosAgendamentoConsultaJson
+                                    .write(new DadosAgendamentoConsulta(2l, 5l, data, especialidade)) //Escrevendo (em JSON)  os dados de agendamento
+                                    .getJson() //Obtendo o JSON
+                        )
+                ).andReturn().getResponse();
+
+        assertThat(response.getStatus()).isEqualTo(HttpStatus.OK.value());
+
+        var jsonEsperado = dadosDetalhamentoConsultaJson.write(
+                dadosDetalhamento
+        ).getJson();
+
+        assertThat(response.getContentAsString()).isEqualTo(jsonEsperado);
+    }
+}
