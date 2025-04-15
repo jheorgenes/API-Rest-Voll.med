@@ -29,6 +29,7 @@ public class SecurityConfigurations {
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)) //Mudando de STATEFUL para STATELESS
                 .authorizeHttpRequests(auth -> {//Definindo as regras de autorização
                     auth.requestMatchers(HttpMethod.POST, "/login").permitAll(); //Permitindo a rota login
+                    auth.requestMatchers("/v3/api-docs/**", "/swagger-ui.html", "swagger-ui/**").permitAll(); //Permitindo as rotas do swagger
                     auth.anyRequest().authenticated(); // Bloqueando as demais rotas
                 })
                 .addFilterBefore(securityFilter, UsernamePasswordAuthenticationFilter.class) //IMPORTANTE: Definindo a ordem de chamada do Filter para securityFilter

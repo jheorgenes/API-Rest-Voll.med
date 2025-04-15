@@ -1,7 +1,5 @@
 package med.voll.api.domain.medico;
 
-import jakarta.validation.constraints.Future;
-import jakarta.validation.constraints.NotNull;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -21,9 +19,16 @@ public interface MedicoRepository extends JpaRepository<Medico, Long> {
                 AND m.id NOT IN (
                     SELECT c.medico.id FROM Consulta c
                         WHERE c.data = :data
+                        AND c.motivoCancelamento IS NULL
                 )
                 ORDER BY rand()
                 LIMIT 1
           """)
     Medico escolherMedicoAleatorioLivreNaData(Especialidade especialidade, LocalDateTime data);
+
+    @Query("""
+            SELECT m.ativo FROM Medico m
+                WHERE m.id = :id
+          """)
+    Boolean findAtivoById(Long id);
 }
